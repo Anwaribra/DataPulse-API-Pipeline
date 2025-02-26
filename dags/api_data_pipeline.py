@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import requests
 import psycopg2
 import logging
+import time
 
 # Default arguments for the DAG
 default_args = {
@@ -18,7 +19,7 @@ default_args = {
 dag = DAG(
     "api_data_pipeline",
     default_args=default_args,
-    schedule="@hourly", 
+    schedule="0 */3 * * *",
     catchup=False,
 )
 
@@ -28,14 +29,22 @@ def fetch_data():
     url = "https://api.coingecko.com/api/v3/simple/price"
     params = {"ids": "bitcoin,ethereum", "vs_currencies": "usd"}
     
-    try:
-        response = requests.get(url, params=params, timeout=10)
-        response.raise_for_status()  # Raise error for failed request
-        data = response.json()
-        logging.info(f"Fetched Data: {data}")
-        save_to_db(data)
-    except requests.RequestException as e:
-        logging.error(f"API Request Failed: {e}")
+    for attempt in range(3):
+        try:
+            response = requests.get(url, params=params, timeout=10)
+            response.raise_for_status()
+            data = response.json()
+            logging.info(f"Fetched Data: {data}")
+            save_to_db(data)
+            return
+        except requests.RequestException as e:
+            wait_time = (2 ** attempt) * 30
+            logging.warning(f"Attempt {attempt + 1} failed: {e}. Waiting {wait_time}s")
+            if attempt < 2:
+                time.sleep(wait_time)
+    
+    logging.error("All retry attempts failed")
+    raise Exception("Failed to fetch data after all retries")
 
 def save_to_db(data):
     """Saves fetched data to PostgreSQL."""
