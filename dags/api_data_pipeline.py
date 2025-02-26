@@ -41,7 +41,7 @@ def save_to_db(data):
     """Saves fetched data to PostgreSQL."""
     try:
         conn = psycopg2.connect(
-            database="etl_project",
+            database="airflow",
             user="PostgreSQL",
             password="2003",
             host="localhost",
