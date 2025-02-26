@@ -70,4 +70,4 @@ fetch_task = PythonOperator(
     dag=dag,
 )
 
-fetch_task  # Ensure the task is added to the DAG
+fetch_task 
