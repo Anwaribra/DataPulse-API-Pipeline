@@ -112,8 +112,75 @@ def save_transformed_data(df):
         logger.error(f"Error saving transformed data: {e}")
         return False
 
+def check_data_exists():
+    """Check if data exists in the crypto_prices table"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM crypto_prices")
+        count = cursor.fetchone()[0]
+        cursor.close()
+        conn.close()
+        
+        if count == 0:
+            logger.warning("No data found in crypto_prices table")
+        else:
+            logger.info(f"Found {count} records in crypto_prices table")
+        
+        return count > 0
+    except Exception as e:
+        logger.error(f"Error checking data: {e}")
+        return False
+
+def init_database():
+    """Initialize database tables"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Create crypto_prices table
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS crypto_prices (
+            id SERIAL PRIMARY KEY,
+            coin VARCHAR(50) NOT NULL,
+            price_usd NUMERIC NOT NULL,
+            timestamp TIMESTAMP NOT NULL
+        );
+        """)
+        
+        # Create crypto_prices_daily table
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS crypto_prices_daily (
+            coin VARCHAR(50),
+            date DATE,
+            avg_price NUMERIC,
+            min_price NUMERIC,
+            max_price NUMERIC,
+            price_std NUMERIC,
+            PRIMARY KEY (coin, date)
+        );
+        """)
+        
+        # Create index
+        cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_crypto_prices_timestamp 
+        ON crypto_prices(timestamp);
+        """)
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        logger.info("Database tables created successfully")
+    except Exception as e:
+        logger.error(f"Error initializing database: {e}")
+
 def main():
     """Main function to run the transformation pipeline"""
+    init_database()
+    if not check_data_exists():
+        logger.error("No data to transform. Please ensure data is being collected.")
+        return
+        
     raw_data = fetch_raw_data()
     if raw_data is not None:
         transformed_data = transform_data(raw_data)

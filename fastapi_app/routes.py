@@ -1,14 +1,14 @@
 from fastapi import APIRouter, HTTPException
 from typing import List
 import psycopg2
-from fastapi_app.models import CryptoPrice
+from .models import CryptoPrice
 
 router = APIRouter()
 
 def get_db_connection():
     return psycopg2.connect(
         database="airflow",
-        user="PostgreSQL",
+        user="postgres",
         password="2003",
         host="localhost",
         port="5432"
