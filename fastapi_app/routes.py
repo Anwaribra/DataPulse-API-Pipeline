@@ -7,7 +7,7 @@ router = APIRouter()
 
 def get_db_connection():
     return psycopg2.connect(
-        database="airflow",
+        database="datapulse",
         user="postgres",
         password="2003",
         host="localhost",

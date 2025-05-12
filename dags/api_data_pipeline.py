@@ -84,7 +84,7 @@ def verify_data_collection():
         )
         cursor = conn.cursor()
         
-        # Check latest collected data
+        
         cursor.execute("""
             SELECT coin, price_usd, timestamp 
             FROM crypto_prices 
@@ -101,7 +101,7 @@ def verify_data_collection():
         for record in latest_data:
             logging.info(f"Coin: {record[0]}, Price: ${record[1]}, Time: {record[2]}")
             
-        # Check records count in last hour
+    
         cursor.execute("""
             SELECT COUNT(*) 
             FROM crypto_prices 
